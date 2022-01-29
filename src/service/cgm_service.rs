@@ -1,5 +1,8 @@
 use mongodb::{Client, options::ClientOptions};
 use anyhow::Result;
+
+use crate::{error::GlucError};
+
 ///Cgm service
 pub struct CgmService {}
 
@@ -26,7 +29,7 @@ impl CgmService {
     //     Ok(cgms.iter().map(|x| x.into()).collect())
     // }
 
-    pub async fn ping() -> Result<()> {
+    pub async fn ping() -> Result<Vec<String>, GlucError> {
         // Parse a connection string into an options struct.
         let mut client_options = ClientOptions::parse("mongodb://localhost:27017").await?;
 
@@ -37,11 +40,12 @@ impl CgmService {
         let client = Client::with_options(client_options)?;
 
         // List the names of the databases in that deployment.
+        let mut data = Vec::new();
         for db_name in client.list_database_names(None, None).await? {
-            println!("{}", db_name);
+            data.push(db_name);
         }
 
-        Ok(())
+        Ok(data)
         
     }
 }
