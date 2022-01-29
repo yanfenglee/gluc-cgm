@@ -1,11 +1,10 @@
-use actix_web::{HttpResponse, body::BoxBody, web::JsonBody};
+use actix_web::{HttpResponse, body::BoxBody};
+use strum_macros::{IntoStaticStr};
 
 use crate::Ret;
 
 
-
-
-#[derive(thiserror::Error, Debug, Clone)]
+#[derive(thiserror::Error, Debug, IntoStaticStr)]
 pub enum GlucError {
     #[error("{0}")]
     AuthError(String),
@@ -31,17 +30,5 @@ impl actix_web::ResponseError for GlucError {
 impl From<mongodb::error::Error> for GlucError {
     fn from(err: mongodb::error::Error) -> Self {
         GlucError::DBError(err)
-    }
-}
-
-impl GlucError {
-    pub fn get_code(&self) -> String {
-        let code = match self {
-            GlucError::AuthError(_) => "0001".into(),
-            GlucError::DBError(_) => "0002".into(),
-            GlucError::UnknownError(_) => "0003".into(),
-        };
-        
-        code
     }
 }

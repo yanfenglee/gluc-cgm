@@ -16,3 +16,5 @@ serde = { version = "1", features = ["derive"] }
 lazy_static = "1.4.0"
 anyhow = "1.0"
 thiserror = "1.0"
+strum = "0.23"
+strum_macros = "0.23"

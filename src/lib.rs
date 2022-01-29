@@ -1,4 +1,3 @@
-use std::error::Error;
 
 use actix_web::HttpResponse;
 use error::GlucError;
@@ -40,8 +39,9 @@ impl<T> Into<HttpResponse> for Ret<T>  where T: Serialize {
 
 impl From<&GlucError> for Ret<()> {
     fn from(err: &GlucError) -> Ret<()> {
+        let code_str: &'static str = err.into();
         Ret {
-            code: err.get_code(),
+            code: code_str.into(),
             msg: Some(format!("gluc exception: {:?}", err)),
             data: None,
         }
