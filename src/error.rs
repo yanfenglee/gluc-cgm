@@ -32,3 +32,10 @@ impl From<mongodb::error::Error> for GlucError {
         GlucError::DBError(err)
     }
 }
+
+impl From<std::io::Error> for GlucError {
+    fn from(err: std::io::Error) -> Self {
+        GlucError::UnknownError(err.to_string())
+    }
+}
+
