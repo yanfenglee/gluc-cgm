@@ -1,8 +1,9 @@
-use actix_web::{post, web};
+use actix_web::{get, post, web};
 use mongodb::bson::doc;
 
 use crate::{
     error::GlucError,
+    middleware::auth_user::AuthUser,
     ret,
     structs::{User, UserDTO, UserLoginDTO, UserRegisterDTO},
     util::hash,
@@ -11,7 +12,12 @@ use crate::{
 
 /// config route service
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("/user").service(register).service(login));
+    cfg.service(
+        web::scope("/user")
+            .service(register)
+            .service(login)
+            .service(check),
+    );
 }
 
 #[post("/register")]
@@ -53,4 +59,13 @@ pub async fn login(arg: web::Json<UserLoginDTO>) -> Result<Ret<UserDTO>, GlucErr
     } else {
         return Err(GlucError::AuthError("用户名或密码错误".to_owned()));
     };
+}
+
+#[get("/check")]
+pub async fn check(user: Option<AuthUser>) -> Result<Ret<User>, GlucError> {
+    if let Some(user) = user {
+        return ret(user.user);
+    } else {
+        return Err(GlucError::AuthError("auth failed".to_owned()));
+    }
 }

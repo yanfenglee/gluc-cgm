@@ -11,6 +11,7 @@ pub mod error;
 pub mod structs;
 pub mod controller;
 pub mod util;
+pub mod middleware;
 
 // mongodb singleton
 pub static MONGO: OnceCell<Database> = OnceCell::new();
@@ -46,7 +47,7 @@ pub fn ret<T>(data: T) -> Result<Ret<T>, GlucError> where T: Serialize {
 impl<T> Responder for Ret<T>  where T: Serialize {
     type Body = BoxBody;
 
-    fn respond_to(self, req: &actix_web::HttpRequest) -> HttpResponse<Self::Body> {
+    fn respond_to(self, _: &actix_web::HttpRequest) -> HttpResponse<Self::Body> {
         //web::Json::<T>(self).respond_to(req)
         HttpResponse::Ok().json(self)
     }

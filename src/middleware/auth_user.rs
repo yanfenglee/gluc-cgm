@@ -1,17 +1,13 @@
-use actix_web::{FromRequest, HttpRequest};
-use actix_http::{Payload, Error};
-use actix_http::error::ParseError;
-use actix_http::http::HeaderMap;
-use std::pin::Pin;
-use futures::{Future};
+use actix_web::{FromRequest, HttpRequest, http::{header::HeaderMap, Error}, web::{Query}, error::ParseError};
+use mongodb::bson::doc;
 
-use crate::util::local_cache;
-use qstring::QString;
+use std::{pin::Pin, future::Future, collections::HashMap};
+
+use crate::{MONGO, structs::User};
 
 #[derive(Debug)]
 pub struct AuthUser {
-    pub(crate) user_id: i64,
-    pub(crate) token: String,
+    pub(crate) user: User,
 }
 
 impl AuthUser {
@@ -26,7 +22,7 @@ impl AuthUser {
     }
 
     pub async fn from_request(req: &HttpRequest) -> Option<Self> {
-        let qs = QString::from(req.query_string());
+        let qs = Query::<HashMap<String, String>>::from_query(req.query_string()).unwrap();
 
         if let Some(token) = qs.get("token") {
             println!("from query string token: {}", token);
@@ -37,27 +33,21 @@ impl AuthUser {
     }
 
     pub async fn from_token(token: &String) -> Option<Self> {
-        if let Ok(Some(id)) = select_id(&token).await {
-            // write cache
-            local_cache::set(token.as_str(), &id);
+        let db = MONGO.get().unwrap();
 
-            log::info!("cache miss, get from db: {}", id);
-
-            return Some(AuthUser { user_id: id, token: token.clone() });
-        }
-
-        None
+        let user = db.collection::<User>("cgm").find_one(doc!{"token":token}, None).await.ok()??;
+            
+        Some(AuthUser { user })
     }
 }
 
 impl FromRequest for AuthUser {
     type Error = Error;
     type Future = Pin<Box<dyn Future<Output=Result<Self, Self::Error>>>>;
-    type Config = ();
 
     fn from_request(
         req: &HttpRequest,
-        _payload: &mut Payload,
+        _payload: &mut actix_web::dev::Payload,
     ) -> Self::Future {
 
         let req = req.clone();
