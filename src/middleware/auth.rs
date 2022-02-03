@@ -1,6 +1,6 @@
 use std::{pin::Pin, future, fmt::Debug};
 
-use actix_web::{dev::{Service, ServiceRequest, Transform}};
+use actix_web::{dev::{Service, ServiceRequest, Transform}, HttpRequest};
 use futures::future::{Ready, ready};
 
 
@@ -26,23 +26,22 @@ impl<S> Service<ServiceRequest> for AuthService<S> where S: Service<ServiceReque
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
 
-        Box::pin(self.service.call(req))
+        let qs = String::from(req.query_string());
+        let headers = req.headers().clone();
 
-        // let (http_req, payload) = req.into_parts();
-        // let req = ServiceRequest::from_parts(http_req.clone(), payload);
+        let fut = self.service.call(req);
 
-        // let fut = self.service.call(req);
+        let res = async move {
+            if let Some(user) = AuthUser::from_header_qs(headers, qs).await {
+                let res = fut.await?;
+                Ok(res)
+            } else {
+                println!("auth failed");
+                Err(actix_web::Error::from(GlucError::AuthError("failed auth".to_string())))
+            }
+        };
 
-        // let res = async move {
-        //     if let Some(user) = AuthUser::from_request(&http_req).await {
-        //         let res = fut.await?;
-        //         Ok(res)
-        //     } else {
-        //         Err(actix_web::Error::from(GlucError::AuthError("failed auth".to_string())))
-        //     }
-        // };
-
-        // Box::pin(res)
+        Box::pin(res)
         
     }
 }

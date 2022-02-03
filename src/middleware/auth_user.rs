@@ -4,6 +4,7 @@ use actix_web::{
     web::Query,
     FromRequest, HttpRequest,
 };
+use futures::TryFutureExt;
 use mongodb::bson::doc;
 
 use std::{collections::HashMap, future::Future, pin::Pin};
@@ -16,7 +17,7 @@ pub struct AuthUser {
 }
 
 impl AuthUser {
-    pub async fn from_header(headers: &HeaderMap) -> Option<Self> {
+    pub async fn from_header(headers: HeaderMap) -> Option<Self> {
         if let Some(header) = headers.get("token") {
             let token = header.to_str().unwrap().to_string();
 
@@ -26,17 +27,32 @@ impl AuthUser {
         None
     }
 
+    pub async fn from_header_qs(headers: HeaderMap, qs: String) -> Option<Self> {
+        Self::from_header(headers).await.or(Self::from_qstring(qs).await)
+    }
+
     pub async fn from_request(req: &HttpRequest) -> Option<Self> {
         if let Ok(qs) = Query::<HashMap<String, String>>::from_query(req.query_string()) {
             if let Some(token) = qs.get("token") {
                 println!("from query string token: {}", token);
                 return Self::from_token(&token.to_string()).await;
             } else {
-                return Self::from_header(req.headers()).await;
+                return Self::from_header(req.headers().clone()).await;
             }
         } else {
             return None;
         }
+    }
+
+    pub async fn from_qstring(qstring: String) -> Option<Self> {
+        if let Ok(qs) = Query::<HashMap<String, String>>::from_query(&qstring) {
+            if let Some(token) = qs.get("token") {
+                println!("from query string token: {}", token);
+                return Self::from_token(&token.to_string()).await;
+            }
+        }
+
+        return None;
     }
 
     pub async fn from_token(token: &String) -> Option<Self> {
