@@ -1,3 +1,5 @@
+use std::fmt::{Display, Debug};
+
 use actix_web::{HttpResponse, body::BoxBody};
 use strum_macros::{IntoStaticStr};
 
@@ -33,9 +35,8 @@ impl From<mongodb::error::Error> for GlucError {
     }
 }
 
-impl From<std::io::Error> for GlucError {
-    fn from(err: std::io::Error) -> Self {
-        GlucError::UnknownError(err.to_string())
-    }
-}
-
+// impl <E> From<E> for GlucError {
+//     fn from(err: E) -> Self {
+//         GlucError::UnknownError(err)
+//     }
+// }

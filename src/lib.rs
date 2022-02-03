@@ -1,4 +1,6 @@
 
+use std::fmt::{Debug, Display};
+
 use actix_web::{HttpResponse, Responder, body::{MessageBody, BoxBody}, web::{self, JsonBody}};
 use error::GlucError;
 use mongodb::{Database};
@@ -53,7 +55,7 @@ impl<T> Responder for Ret<T>  where T: Serialize {
     }
 }
 
-impl From<&GlucError> for Ret<()> {
+impl From<&GlucError> for Ret<()>  {
     fn from(err: &GlucError) -> Ret<()> {
         let code_str: &'static str = err.into();
         Ret {

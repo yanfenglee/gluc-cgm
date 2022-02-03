@@ -1,21 +1,35 @@
-use actix_web::{get, post, web};
+use actix_web::{get, post, web, dev::{ServiceRequest, Service, ServiceResponse}, http::header::{CONTENT_TYPE, HeaderValue}, body::BoxBody};
+use futures::{Future, FutureExt};
 use mongodb::bson::doc;
 
 use crate::{
     error::GlucError,
-    middleware::auth_user::AuthUser,
+    middleware::{auth_user::AuthUser, auth},
     ret,
     structs::{User, UserDTO, UserLoginDTO, UserRegisterDTO},
     util::hash,
     Ret, MONGO,
 };
 
+async fn index(info: web::Path<String>) -> String {
+    format!("Welcome {}!", info)
+}
+
+//F: Fn(ServiceRequest, &T::Service) -> R + Clone + 'static,
+//R: Future<Output = Result<ServiceResponse<B>, Error>>,
+
+// fn auth_func<B>(req: ServiceRequest, srv: &Service<ServiceRequest, Response = ServiceResponse<BoxBody>, Error = GlucError, Future = Box<dyn Future<GlucError, Output = Result<ServiceResponse<BoxBody>>>>>) -> Future<Output = Result<ServiceResponse<BoxBody>, GlucError>> {
+//     srv.call(req).await?
+// }
+
 /// config route service
 pub fn config(cfg: &mut web::ServiceConfig) {
+
     cfg.service(
         web::scope("/user")
             .service(register)
             .service(login)
+            .wrap(auth::UserAuth)
             .service(check),
     );
 }

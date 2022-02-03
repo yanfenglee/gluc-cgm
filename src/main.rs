@@ -9,7 +9,7 @@ use mongodb::{Client, options::ClientOptions};
 use anyhow::Result;
 
 #[tokio::main]
-async fn main() -> Result<(), GlucError> {
+async fn main() -> Result<(), anyhow::Error> {
     env_logger::init();
 
 

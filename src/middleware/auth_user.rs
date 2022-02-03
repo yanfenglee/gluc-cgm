@@ -1,9 +1,14 @@
-use actix_web::{FromRequest, HttpRequest, http::{header::HeaderMap, Error}, web::{Query}, error::ParseError};
+use actix_web::{
+    error::ParseError,
+    http::{header::HeaderMap, Error},
+    web::Query,
+    FromRequest, HttpRequest,
+};
 use mongodb::bson::doc;
 
-use std::{pin::Pin, future::Future, collections::HashMap};
+use std::{collections::HashMap, future::Future, pin::Pin};
 
-use crate::{MONGO, structs::User};
+use crate::{structs::User, MONGO};
 
 #[derive(Debug)]
 pub struct AuthUser {
@@ -15,41 +20,43 @@ impl AuthUser {
         if let Some(header) = headers.get("token") {
             let token = header.to_str().unwrap().to_string();
 
-            return Self::from_token(&token).await
+            return Self::from_token(&token).await;
         }
 
         None
     }
 
     pub async fn from_request(req: &HttpRequest) -> Option<Self> {
-        let qs = Query::<HashMap<String, String>>::from_query(req.query_string()).unwrap();
-
-        if let Some(token) = qs.get("token") {
-            println!("from query string token: {}", token);
-            return Self::from_token(&token.to_string()).await;
+        if let Ok(qs) = Query::<HashMap<String, String>>::from_query(req.query_string()) {
+            if let Some(token) = qs.get("token") {
+                println!("from query string token: {}", token);
+                return Self::from_token(&token.to_string()).await;
+            } else {
+                return Self::from_header(req.headers()).await;
+            }
         } else {
-            return Self::from_header(req.headers()).await;
+            return None;
         }
     }
 
     pub async fn from_token(token: &String) -> Option<Self> {
         let db = MONGO.get().unwrap();
 
-        let user = db.collection::<User>("cgm").find_one(doc!{"token":token}, None).await.ok()??;
-            
+        let user = db
+            .collection::<User>("cgm")
+            .find_one(doc! {"token":token}, None)
+            .await
+            .ok()??;
+
         Some(AuthUser { user })
     }
 }
 
 impl FromRequest for AuthUser {
     type Error = Error;
-    type Future = Pin<Box<dyn Future<Output=Result<Self, Self::Error>>>>;
+    type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
 
-    fn from_request(
-        req: &HttpRequest,
-        _payload: &mut actix_web::dev::Payload,
-    ) -> Self::Future {
-
+    fn from_request(req: &HttpRequest, _payload: &mut actix_web::dev::Payload) -> Self::Future {
         let req = req.clone();
 
         let ret = async move {
