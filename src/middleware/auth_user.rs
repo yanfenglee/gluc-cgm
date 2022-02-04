@@ -4,7 +4,6 @@ use actix_web::{
     web::Query,
     FromRequest, HttpRequest,
 };
-use futures::TryFutureExt;
 use mongodb::bson::doc;
 
 use std::{collections::HashMap, future::Future, pin::Pin};

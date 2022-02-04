@@ -1,4 +1,4 @@
-use std::fmt::{Display, Debug};
+use std::fmt::{Debug};
 
 use actix_web::{HttpResponse, body::BoxBody};
 use strum_macros::{IntoStaticStr};

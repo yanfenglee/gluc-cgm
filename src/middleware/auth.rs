@@ -1,6 +1,6 @@
-use std::{pin::Pin, future, fmt::Debug};
+use std::{pin::Pin, future};
 
-use actix_web::{dev::{Service, ServiceRequest, Transform}, HttpRequest};
+use actix_web::{dev::{Service, ServiceRequest, Transform}};
 use futures::future::{Ready, ready};
 
 
@@ -32,7 +32,7 @@ impl<S> Service<ServiceRequest> for AuthService<S> where S: Service<ServiceReque
         let fut = self.service.call(req);
 
         let res = async move {
-            if let Some(user) = AuthUser::from_header_qs(headers, qs).await {
+            if let Some(_user) = AuthUser::from_header_qs(headers, qs).await {
                 let res = fut.await?;
                 Ok(res)
             } else {

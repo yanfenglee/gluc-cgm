@@ -13,7 +13,7 @@ pub fn sha1(data: &String) -> String {
 
     let mut hex_str = String::with_capacity(2 * output.len());
     for byte in output {
-        write!(hex_str, "{:02x}", byte);
+        write!(hex_str, "{:02x}", byte).expect("sha1 error");
     }
 
     hex_str
