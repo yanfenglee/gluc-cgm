@@ -8,7 +8,7 @@ use mongodb::bson::doc;
 
 use std::{collections::HashMap, future::Future, pin::Pin};
 
-use crate::{structs::User, MONGO};
+use crate::{structs::User, DB};
 
 #[derive(Debug)]
 pub struct AuthUser {
@@ -55,10 +55,7 @@ impl AuthUser {
     }
 
     pub async fn from_token(token: &String) -> Option<Self> {
-        let db = MONGO.get().unwrap();
-
-        let user = db
-            .collection::<User>("cgm")
+        let user = DB::coll::<User>()
             .find_one(doc! {"token":token}, None)
             .await
             .ok()??;

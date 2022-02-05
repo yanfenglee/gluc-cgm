@@ -3,8 +3,6 @@ use std::fmt::{Debug};
 
 use actix_web::{HttpResponse, Responder, body::{BoxBody}};
 use error::GlucError;
-use mongodb::{Database, options::ClientOptions, Client};
-use once_cell::sync::OnceCell;
 use serde::{Serialize, Deserialize};
 
 
@@ -15,29 +13,8 @@ pub mod controller;
 pub mod util;
 pub mod middleware;
 
-// mongodb singleton
-static MONGO: OnceCell<Database> = OnceCell::new();
-
-pub struct DB;
-impl DB {
-    pub fn get() -> &'static Database {
-        MONGO.get().expect("mongo not init!!!")
-    }
-
-    pub async fn init() -> Result<(), anyhow::Error>{
-            // Parse a connection string into an options struct.
-        let mut client_options = ClientOptions::parse("mongodb://localhost:27017").await?;
-
-        // Manually set an option.
-        client_options.app_name = Some("My App".to_string());
-
-        // Get a handle to the deployment.
-        let db = Client::with_options(client_options)?.database("asdf");
-        let _ = MONGO.set(db);
-        Ok(())
-    }
-}
-
+pub mod db;
+pub use db::DB;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Ret<T> {

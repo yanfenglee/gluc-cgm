@@ -7,7 +7,7 @@ use crate::{
     ret,
     structs::{User, UserDTO, UserLoginDTO, UserRegisterDTO},
     util::hash,
-    Ret, MONGO, DB,
+    Ret, DB,
 };
 
 /// config route service
@@ -24,29 +24,28 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 
 #[post("/register")]
 pub async fn register(arg: web::Json<UserRegisterDTO>) -> Result<Ret<()>, GlucError> {
-    let db = MONGO.get().unwrap();
+
+    let hs = hash::sha1(&format!("{}_{}", arg.username, arg.password));
 
     let user = User {
+        user_id: hs.clone(),
         username: arg.username.clone(),
         password: Some(arg.password.clone()),
         nickname: arg.nickname.clone(),
         email: arg.email.clone(),
         phone: arg.phone.clone(),
-        token: hash::sha1(&format!("{}_{}", arg.username, arg.password)),
+        token: hs,
     };
 
-    db.collection("cgm").insert_one(user, None).await?;
+    DB::coll().insert_one(user, None).await?;
 
     ret(())
 }
 
 #[post("/login")]
 pub async fn login(arg: web::Json<UserLoginDTO>) -> Result<Ret<UserDTO>, GlucError> {
-    log::info!("user login: {:?}", arg);
-    let db = DB::get();
 
-    if let Some(user) = db
-        .collection::<User>("cgm")
+    if let Some(user) = DB::coll::<User>()
         .find_one(
             doc! {"username":arg.username.clone(),"password":arg.password.clone()},
             None,

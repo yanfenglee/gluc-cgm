@@ -17,6 +17,7 @@ async fn main() -> Result<(), anyhow::Error> {
         App::new()
             .app_data(web::JsonConfig::default().limit(1024 * 1024 * 8))
             .configure(controller::user_controller::config)
+            .configure(controller::cgm_controller::config)
     })
     .bind("localhost:8999")?
     .run()
