@@ -1,3 +1,4 @@
+use mongodb::bson::{oid::ObjectId, DateTime};
 use serde::{Serialize, Deserialize};
 
 use crate::db::CollectionName;
@@ -5,13 +6,14 @@ use crate::db::CollectionName;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct User {
-    pub user_id: String,
+    pub _id: ObjectId,
     pub username: String,
     pub password: Option<String>,
     pub nickname: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
     pub token: String,
+    pub create_time: DateTime,
 }
 
 impl CollectionName for User {
@@ -23,7 +25,7 @@ impl CollectionName for User {
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Cgm {
-    pub user_id: Option<String>,
+    pub user_id: Option<ObjectId>,
     pub device: Option<String>,
     pub date: Option<i64>,
     pub dateString: Option<String>,
@@ -42,6 +44,7 @@ pub struct Cgm {
     pub intercept: Option<f64>,
     pub scale: Option<i32>,
     pub mbg: Option<f64>,
+    pub create_time: Option<DateTime>,
 }
 
 impl CollectionName for Cgm {

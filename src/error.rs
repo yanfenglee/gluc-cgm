@@ -12,6 +12,9 @@ pub enum GlucError {
     AuthError(String),
 
     #[error("{0}")]
+    RegisterError(String),
+
+    #[error("{0}")]
     DBError(mongodb::error::Error),
 
     #[error("{0}")]

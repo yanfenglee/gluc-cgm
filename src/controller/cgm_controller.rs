@@ -1,6 +1,6 @@
 use actix_web::{web, get, post};
 use futures::TryStreamExt;
-use mongodb::bson::doc;
+use mongodb::bson::{doc, DateTime};
 use mongodb::options::FindOptions;
 //use chrono::NaiveDateTime;
 //use rbatis::core::value::DateTimeNow;
@@ -30,13 +30,9 @@ pub async fn receive_bg(user: AuthUser, arg: web::Json<Vec<Cgm>>) -> Result<Ret<
     let mut data = arg.into_inner();
 
     for item in data.iter_mut() {
-        item.user_id = Some(user.user.user_id.clone());
+        item.user_id = Some(user.user._id);
+        item.create_time = Some(DateTime::now())
     }
-
-    // let _ = data.iter_mut().map(|item| {
-    //     item.user_id = Some(user.user.user_id.clone());
-    //     item
-    // });
 
     log::info!("store cgm: {:?}", data);
 
@@ -56,11 +52,11 @@ pub async fn get_bg(user: AuthUser, info: web::Query<Info>) -> Result<Ret<Vec<Cg
     log::info!("query entries {:?}, {:?}", user, info);
 
     let opt = FindOptions::builder()
-    .sort(doc!{"date": 1})
+    .sort(doc!{"_id": -1})
     .limit(info.count)
     .build();
 
-    let res: Vec<Cgm> = DB::coll().find(doc!{"user_id": user.user.token, "date": {"$lte": info.rr}}, Some(opt)).await?.try_collect().await?;
+    let res: Vec<Cgm> = DB::coll().find(doc!{"user_id": user.user._id, "date": {"$lte": info.rr}}, Some(opt)).await?.try_collect().await?;
 
     ret(res)
 }

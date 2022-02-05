@@ -1,5 +1,5 @@
 use actix_web::{get, post, web};
-use mongodb::bson::doc;
+use mongodb::bson::{doc, oid::ObjectId, DateTime};
 
 use crate::{
     error::GlucError,
@@ -25,16 +25,21 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 #[post("/register")]
 pub async fn register(arg: web::Json<UserRegisterDTO>) -> Result<Ret<()>, GlucError> {
 
+    if let Some(_user) = DB::coll::<User>().find_one(doc!{"username": arg.username.clone()}, None).await? {
+        return Err(GlucError::RegisterError(format!("用户名已存在!!! {}", _user.username)));
+    }
+
     let hs = hash::sha1(&format!("{}_{}", arg.username, arg.password));
 
     let user = User {
-        user_id: hs.clone(),
+        _id: ObjectId::new(),
         username: arg.username.clone(),
         password: Some(arg.password.clone()),
         nickname: arg.nickname.clone(),
         email: arg.email.clone(),
         phone: arg.phone.clone(),
         token: hs,
+        create_time: DateTime::now(),
     };
 
     DB::coll().insert_one(user, None).await?;
