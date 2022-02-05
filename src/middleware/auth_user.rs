@@ -60,6 +60,8 @@ impl AuthUser {
             .await
             .ok()??;
 
+        log::info!("user: {:?}", user);
+
         Some(AuthUser { user })
     }
 }

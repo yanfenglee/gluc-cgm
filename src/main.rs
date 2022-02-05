@@ -19,7 +19,7 @@ async fn main() -> Result<(), anyhow::Error> {
             .configure(controller::user_controller::config)
             .configure(controller::cgm_controller::config)
     })
-    .bind("localhost:8999")?
+    .bind("0.0.0.0:8999")?
     .run()
     .await?;
     

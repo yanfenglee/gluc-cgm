@@ -3,7 +3,7 @@ use mongodb::bson::doc;
 
 use crate::{
     error::GlucError,
-    middleware::{auth_user::AuthUser, auth},
+    middleware::{auth_user::AuthUser},
     ret,
     structs::{User, UserDTO, UserLoginDTO, UserRegisterDTO},
     util::hash,
@@ -17,7 +17,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         web::scope("/user")
             .service(register)
             .service(login)
-            .wrap(auth::UserAuth)
+            //.wrap(auth::UserAuth)
             .service(check),
     );
 }

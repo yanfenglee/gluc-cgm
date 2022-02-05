@@ -25,11 +25,20 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 /// receive bg
 #[post("/entries")]
 pub async fn receive_bg(user: AuthUser, arg: web::Json<Vec<Cgm>>) -> Result<Ret<()>, GlucError> {
+    log::info!("receive cgm {:?}, {:?}", user, arg);
+
     let mut data = arg.into_inner();
 
-    let _ = data.iter_mut().map(|item| {
+    for item in data.iter_mut() {
         item.user_id = Some(user.user.user_id.clone());
-    });
+    }
+
+    // let _ = data.iter_mut().map(|item| {
+    //     item.user_id = Some(user.user.user_id.clone());
+    //     item
+    // });
+
+    log::info!("store cgm: {:?}", data);
 
     DB::coll().insert_many(data, None).await?;
     ret(())
