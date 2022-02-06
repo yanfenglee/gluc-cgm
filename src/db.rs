@@ -2,6 +2,8 @@
 use mongodb::{Database, options::ClientOptions, Client, Collection};
 use once_cell::sync::OnceCell;
 
+use crate::settings::Settings;
+
 // mongodb singleton
 static INSTANCE: OnceCell<Database> = OnceCell::new();
 
@@ -13,13 +15,13 @@ impl DB {
 
     pub async fn init() -> Result<(), anyhow::Error>{
             // Parse a connection string into an options struct.
-        let mut client_options = ClientOptions::parse("mongodb://localhost:27017").await?;
+        let mut client_options = ClientOptions::parse(&Settings::get().database_uri).await?;
 
         // Manually set an option.
-        client_options.app_name = Some("My App".to_string());
+        client_options.app_name = Some("gluc-cgm".to_string());
 
         // Get a handle to the deployment.
-        let db = Client::with_options(client_options)?.database("cgm");
+        let db = Client::with_options(client_options)?.database(&Settings::get().database_name);
         let _ = INSTANCE.set(db);
         Ok(())
     }

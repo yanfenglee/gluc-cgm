@@ -1,0 +1,6 @@
+# database setting
+database_uri = "mongodb://localhost:27017"
+database_name = "cgm-default"
+
+# bind address
+bind_addr = "0.0.0.0:8899"

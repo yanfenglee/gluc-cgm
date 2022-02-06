@@ -5,7 +5,7 @@ use actix_web::{HttpResponse, Responder, body::{BoxBody}};
 use error::GlucError;
 use serde::{Serialize, Deserialize};
 
-
+pub mod settings;
 pub mod service;
 pub mod error;
 pub mod structs;
@@ -15,6 +15,7 @@ pub mod middleware;
 
 pub mod db;
 pub use db::DB;
+pub mod application;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Ret<T> {
