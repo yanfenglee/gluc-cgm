@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 tokio = {version = "1", features = ["full"]}
 config = "0.11"
-actix-web = {git = "https://github.com/actix/actix-web.git", tag = "web-v4.0.0-beta.21"}
+actix-web = "4"
 log = "0.4"
 env_logger = "0.9"
 mongodb = "2.1.0"
