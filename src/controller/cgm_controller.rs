@@ -7,10 +7,10 @@ use mongodb::options::FindOptions;
 use serde::Deserialize;
 
 use crate::{Ret, DB, ret};
-use crate::error::GlucError;
 use crate::structs::Cgm;
 use crate::middleware::auth_user::AuthUser;
 use crate::middleware::auth;
+use crate::Result;
 
 /// config route service
 pub fn config(cfg: &mut web::ServiceConfig) {
@@ -24,7 +24,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 
 /// receive bg
 #[post("/entries")]
-pub async fn receive_bg(user: AuthUser, arg: web::Json<Vec<Cgm>>) -> Result<Ret<()>, GlucError> {
+pub async fn receive_bg(user: AuthUser, arg: web::Json<Vec<Cgm>>) -> Result<Ret<()>> {
     log::info!("receive cgm {:?}, {:?}", user, arg);
 
     let mut data = arg.into_inner();
@@ -48,7 +48,7 @@ pub struct Info {
 }
 
 #[get("/entries.json")]
-pub async fn get_bg(user: AuthUser, info: web::Query<Info>) -> Result<Ret<Vec<Cgm>>, GlucError> {
+pub async fn get_bg(user: AuthUser, info: web::Query<Info>) -> Result<Ret<Vec<Cgm>>> {
     log::info!("query entries {:?}, {:?}", user, info);
 
     let opt = FindOptions::builder()

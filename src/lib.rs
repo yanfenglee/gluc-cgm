@@ -5,6 +5,8 @@ use actix_web::{HttpResponse, Responder, body::{BoxBody}};
 use error::GlucError;
 use serde::{Serialize, Deserialize};
 
+pub type Result<V> = core::result::Result<V, GlucError>;
+
 pub mod settings;
 pub mod service;
 pub mod error;
@@ -34,7 +36,7 @@ impl<T> Ret<T> {
     }
 }
 
-pub fn ret<T>(data: T) -> Result<Ret<T>, GlucError> where T: Serialize {
+pub fn ret<T>(data: T) -> Result<Ret<T>> where T: Serialize {
     Ok(Ret::new(data))
 }
 
