@@ -50,6 +50,8 @@ pub async fn register(arg: web::Json<UserRegisterDTO>) -> Result<Ret<()>, GlucEr
 #[post("/login")]
 pub async fn login(arg: web::Json<UserLoginDTO>) -> Result<Ret<UserDTO>, GlucError> {
 
+    tracing::info!("login called");
+
     if let Some(user) = DB::coll::<User>()
         .find_one(
             doc! {"username":arg.username.clone(),"password":arg.password.clone()},

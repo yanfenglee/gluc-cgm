@@ -25,7 +25,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 /// receive bg
 #[post("/entries")]
 pub async fn receive_bg(user: AuthUser, arg: web::Json<Vec<Cgm>>) -> Result<Ret<()>> {
-    log::info!("receive cgm {:?}, {:?}", user, arg);
+    tracing::info!("receive cgm {:?}, {:?}", user, arg);
 
     let mut data = arg.into_inner();
 
@@ -34,7 +34,7 @@ pub async fn receive_bg(user: AuthUser, arg: web::Json<Vec<Cgm>>) -> Result<Ret<
         item.create_time = Some(DateTime::now())
     }
 
-    log::info!("store cgm: {:?}", data);
+    tracing::info!("store cgm: {:?}", data);
 
     DB::coll().insert_many(data, None).await?;
     ret(())
@@ -49,7 +49,7 @@ pub struct Info {
 
 #[get("/entries.json")]
 pub async fn get_bg(user: AuthUser, info: web::Query<Info>) -> Result<Ret<Vec<Cgm>>> {
-    log::info!("query entries {:?}, {:?}", user, info);
+    tracing::info!("query entries {:?}, {:?}", user, info);
 
     let opt = FindOptions::builder()
     .sort(doc!{"_id": -1})

@@ -1,11 +1,17 @@
 use actix_web::{HttpServer, App, web};
 use anyhow::Result;
-use log::info;
+use tracing::{info, Level};
+use tracing_subscriber;
 
 use crate::{DB, controller, settings::Settings};
 
 pub async fn run() -> Result<(), anyhow::Error> {
-    env_logger::init();
+    // install global collector configured based on RUST_LOG env var.
+    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
+
+    let number_of_yaks = 3;
+    // this creates a new event, outside of any spans.
+    info!(number_of_yaks, "preparing to shave yaks");
 
     // read config
     Settings::init()?;

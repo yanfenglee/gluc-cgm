@@ -1,7 +1,7 @@
 use std::env;
 
 use config::{File, Environment, Config, ConfigError};
-use log::info;
+use tracing::info;
 use once_cell::sync::OnceCell;
 use serde::Deserialize;
 
