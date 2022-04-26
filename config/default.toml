@@ -1,3 +1,6 @@
+# log 
+log_level = "debug"  # trace|debug|info|warn|error
+
 # database setting
 database_uri = "mongodb://localhost:27017"
 database_name = "cgm-default"

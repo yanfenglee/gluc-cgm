@@ -1,10 +1,10 @@
-use std::env;
+use std::{env, str::FromStr};
 
-use config::{File, Environment, Config, ConfigError};
-use tracing::info;
+use config::{Config, ConfigError, Environment, File};
 use once_cell::sync::OnceCell;
 use serde::Deserialize;
-
+use tracing::{info, Level};
+use tracing_subscriber::{self, fmt::time};
 
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
@@ -12,12 +12,13 @@ pub struct Settings {
     pub database_uri: String,
     pub database_name: String,
     pub bind_addr: String,
+    pub log_level: String,
 }
 
 static INSTANCE: OnceCell<Settings> = OnceCell::new();
 
 impl Settings {
-    pub fn init() -> Result<(), ConfigError>{
+    pub fn init() -> Result<(), ConfigError> {
         let mut s = Config::new();
 
         // Start off by merging in the "default" configuration file
@@ -38,9 +39,17 @@ impl Settings {
         s.merge(Environment::with_prefix("gluc"))?;
 
         // You can deserialize (and thus freeze) the entire configuration as
-        let setting = s.try_into()?;
+        let setting: Settings = s.try_into()?;
+
+        // init log
+        let level = Level::from_str(setting.log_level.as_str()).unwrap();
+        tracing_subscriber::fmt()
+            .with_max_level(level)
+            .with_timer(time::ChronoLocal::with_format(String::from("%Y-%m-%d %H:%M:%S%.6f")))
+            .init();
+
         info!("settings: {:?}", setting);
-        
+
         INSTANCE.set(setting).unwrap();
         Ok(())
     }

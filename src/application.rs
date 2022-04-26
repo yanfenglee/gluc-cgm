@@ -1,23 +1,16 @@
-use actix_web::{HttpServer, App, web};
+use actix_web::{web, App, HttpServer};
 use anyhow::Result;
-use tracing::{info, Level};
-use tracing_subscriber;
 
-use crate::{DB, controller, settings::Settings};
+use crate::{controller, settings::Settings, DB};
 
 pub async fn run() -> Result<(), anyhow::Error> {
-    // install global collector configured based on RUST_LOG env var.
-    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
-
-    let number_of_yaks = 3;
-    // this creates a new event, outside of any spans.
-    info!(number_of_yaks, "preparing to shave yaks");
-
     // read config
     Settings::init()?;
 
     // init mongodb
     DB::init().await?;
+
+    tracing::info!("start app...");
 
     HttpServer::new(|| {
         App::new()
@@ -28,8 +21,8 @@ pub async fn run() -> Result<(), anyhow::Error> {
     .bind(&Settings::get().bind_addr)?
     .run()
     .await?;
-    
-    info!("application exit!!!");
+
+    tracing::info!("application exit!!!");
 
     Ok(())
 }
