@@ -8,7 +8,7 @@ use mongodb::bson::doc;
 
 use std::{collections::HashMap, future::Future, pin::Pin};
 
-use crate::{structs::User, DB};
+use crate::{structs::User, DB, error::GlucError};
 
 #[derive(Debug)]
 pub struct AuthUser {
@@ -67,7 +67,7 @@ impl AuthUser {
 }
 
 impl FromRequest for AuthUser {
-    type Error = Error;
+    type Error = GlucError;
     type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
 
     fn from_request(req: &HttpRequest, _payload: &mut actix_web::dev::Payload) -> Self::Future {
@@ -77,7 +77,8 @@ impl FromRequest for AuthUser {
             if let Some(user) = AuthUser::from_request(&req).await {
                 Ok(user)
             } else {
-                Err(Error::from(ParseError::Header))
+                //Err(Error::from(ParseError::Header))
+                Err(GlucError::AuthError("require login".into()))
             }
         };
 

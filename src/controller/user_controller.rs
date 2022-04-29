@@ -70,10 +70,10 @@ pub async fn login(arg: web::Json<UserLoginDTO>) -> Result<Ret<UserDTO>, GlucErr
 }
 
 #[get("/check")]
-pub async fn check(user: Option<AuthUser>) -> Result<Ret<User>, GlucError> {
-    if let Some(user) = user {
-        return ret(user.user);
+pub async fn check(user: Option<AuthUser>) -> Result<Ret<String>, GlucError> {
+    if user.is_some() {
+        return ret("user.user".into());
     } else {
-        return Err(GlucError::AuthError("auth failed".to_owned()));
+        return Err(GlucError::AuthError("auth failed222".to_owned()));
     }
 }
