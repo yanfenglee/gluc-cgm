@@ -1,24 +1,34 @@
 use std::fmt::{Debug};
 
 use actix_web::{HttpResponse, body::BoxBody};
-use strum_macros::{IntoStaticStr};
 
 use crate::Ret;
 
 
-#[derive(thiserror::Error, Debug, IntoStaticStr)]
+#[derive(thiserror::Error, Debug)]
 pub enum GlucError {
-    #[error("{0}")]
+    #[error("请重新登陆: {0}")]
     AuthError(String),
 
     #[error("{0}")]
     RegisterError(String),
 
     #[error("{0}")]
-    DBError(mongodb::error::Error),
+    DBError(#[from] mongodb::error::Error),
 
     #[error("{0}")]
     UnknownError(String)
+}
+
+impl GlucError {
+    pub fn get_code(&self) -> &'static str {
+        match self {
+            Self::AuthError(..) => "1001",
+            Self::RegisterError(..) => "1002",
+            Self::DBError(..) => "1003",
+            Self::UnknownError(..) => "1004",
+        }
+    }
 }
 
 impl actix_web::ResponseError for GlucError {
@@ -32,14 +42,3 @@ impl actix_web::ResponseError for GlucError {
     }
 }
 
-impl From<mongodb::error::Error> for GlucError {
-    fn from(err: mongodb::error::Error) -> Self {
-        GlucError::DBError(err)
-    }
-}
-
-// impl <E> From<E> for GlucError {
-//     fn from(err: E) -> Self {
-//         GlucError::UnknownError(err)
-//     }
-// }

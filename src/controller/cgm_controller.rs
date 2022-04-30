@@ -1,4 +1,4 @@
-use actix_web::{web, get, post};
+use actix_web::{get, post, web};
 use futures::TryStreamExt;
 use mongodb::bson::{doc, DateTime};
 use mongodb::options::FindOptions;
@@ -6,21 +6,21 @@ use mongodb::options::FindOptions;
 //use rbatis::core::value::DateTimeNow;
 use serde::Deserialize;
 
-use crate::{Ret, DB, ret};
-use crate::structs::Cgm;
-use crate::middleware::auth_user::AuthUser;
 use crate::middleware::auth;
+use crate::middleware::auth_user::AuthUser;
+use crate::structs::Cgm;
 use crate::Result;
+use crate::{ret, Ret, DB};
 
 /// config route service
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("/api/v1")
-        .wrap(auth::UserAuth)
-        .service(receive_bg)
-        .service(get_bg)
+    cfg.service(
+        web::scope("/api/v1")
+            .wrap(auth::UserAuth)
+            .service(receive_bg)
+            .service(get_bg),
     );
 }
-
 
 /// receive bg
 #[post("/entries")]
@@ -40,7 +40,6 @@ pub async fn receive_bg(user: AuthUser, arg: web::Json<Vec<Cgm>>) -> Result<Ret<
     ret(())
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct Info {
     count: i64,
@@ -52,13 +51,18 @@ pub async fn get_bg(user: AuthUser, info: web::Query<Info>) -> Result<Ret<Vec<Cg
     tracing::info!("query entries {:?}, {:?}", user, info);
 
     let opt = FindOptions::builder()
-    .sort(doc!{"_id": -1})
-    .limit(info.count)
-    .build();
+        .sort(doc! {"_id": -1})
+        .limit(info.count)
+        .build();
 
-    let res: Vec<Cgm> = DB::coll().find(doc!{"user_id": user.user._id, "date": {"$lte": info.rr}}, Some(opt)).await?.try_collect().await?;
+    let res: Vec<Cgm> = DB::coll()
+        .find(
+            doc! {"user_id": user.user._id, "date": {"$lte": info.rr}},
+            Some(opt),
+        )
+        .await?
+        .try_collect()
+        .await?;
 
     ret(res)
 }
-
-

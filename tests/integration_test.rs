@@ -1,6 +1,6 @@
 use serde_json::json;
 
-//#[tokio::test]
+#[tokio::test]
 async fn register() -> Result<(), Box<dyn std::error::Error>> {
     let echo_json: serde_json::Value = reqwest::Client::new()
         .post("http://localhost:8899/user/register")
@@ -34,4 +34,9 @@ async fn login() -> Result<(), Box<dyn std::error::Error>> {
     assert!(echo_json["code"] == json!("OK"), "{}", echo_json);
 
     Ok(())
+}
+
+#[test]
+fn login2() {
+    assert!(1==1)
 }

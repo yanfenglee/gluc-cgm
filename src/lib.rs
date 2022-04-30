@@ -29,7 +29,7 @@ pub struct Ret<T> {
 impl<T> Ret<T> {
     pub fn new(data: T) -> Self {
         Ret {
-            code: "OK".into(),
+            code: "0".into(),
             msg: None,
             data: Some(data)
         }
@@ -57,10 +57,9 @@ impl<T> Responder for Ret<T>  where T: Serialize {
 
 impl From<&GlucError> for Ret<()>  {
     fn from(err: &GlucError) -> Ret<()> {
-        let code_str: &'static str = err.into();
         Ret {
-            code: code_str.into(),
-            msg: Some(format!("gluc exception: {:?}", err)),
+            code: err.get_code().into(),
+            msg: Some(err.to_string()),
             data: None,
         }
     }

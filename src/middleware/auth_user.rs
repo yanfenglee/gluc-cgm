@@ -1,6 +1,5 @@
 use actix_web::{
-    error::ParseError,
-    http::{header::HeaderMap, Error},
+    http::{header::HeaderMap},
     web::Query,
     FromRequest, HttpRequest,
 };

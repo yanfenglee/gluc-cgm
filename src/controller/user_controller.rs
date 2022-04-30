@@ -17,13 +17,14 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         web::scope("/user")
             .service(register)
             .service(login)
-            //.wrap(auth::UserAuth)
             .service(check),
     );
 }
 
 #[post("/register")]
 pub async fn register(arg: web::Json<UserRegisterDTO>) -> Result<Ret<()>, GlucError> {
+
+    tracing::info!("begin login: {:?}", arg);
 
     if let Some(_user) = DB::coll::<User>().find_one(doc!{"username": arg.username.clone()}, None).await? {
         return Err(GlucError::RegisterError(format!("用户名已存在!!! {}", _user.username)));
