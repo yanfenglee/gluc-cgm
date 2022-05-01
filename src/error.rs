@@ -17,6 +17,9 @@ pub enum GlucError {
     DBError(#[from] mongodb::error::Error),
 
     #[error("{0}")]
+    ActixError(String),
+
+    #[error("{0}")]
     UnknownError(String)
 }
 
@@ -26,7 +29,8 @@ impl GlucError {
             Self::AuthError(..) => "1001",
             Self::RegisterError(..) => "1002",
             Self::DBError(..) => "1003",
-            Self::UnknownError(..) => "1004",
+            Self::ActixError(..) => "1004",
+            Self::UnknownError(..) => "1005",
         }
     }
 }

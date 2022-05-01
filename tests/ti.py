@@ -60,7 +60,7 @@ def apply_single(ts, ctx):
         if match(res, expect):
             ctx |= res
             ctx |= resolve(ts['ctx'], ctx)
-            return True, url
+            return True, f"{url}"
         else:
             return False, f"{url} ressult:{res} != {expect}"
     except Exception as ex:

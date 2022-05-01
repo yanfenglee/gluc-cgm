@@ -32,7 +32,6 @@ impl AuthUser {
     pub async fn from_request(req: &HttpRequest) -> Option<Self> {
         if let Ok(qs) = Query::<HashMap<String, String>>::from_query(req.query_string()) {
             if let Some(token) = qs.get("token") {
-                println!("from query string token: {}", token);
                 return Self::from_token(&token.to_string()).await;
             } else {
                 return Self::from_header(req.headers().clone()).await;
@@ -45,7 +44,6 @@ impl AuthUser {
     pub async fn from_qstring(qstring: String) -> Option<Self> {
         if let Ok(qs) = Query::<HashMap<String, String>>::from_query(&qstring) {
             if let Some(token) = qs.get("token") {
-                println!("from query string token: {}", token);
                 return Self::from_token(&token.to_string()).await;
             }
         }

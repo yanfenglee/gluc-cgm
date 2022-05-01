@@ -36,7 +36,6 @@ impl<S> Service<ServiceRequest> for AuthService<S> where S: Service<ServiceReque
                 let res = fut.await?;
                 Ok(res)
             } else {
-                println!("auth failed");
                 Err(actix_web::Error::from(GlucError::AuthError("failed auth".to_string())))
             }
         };
