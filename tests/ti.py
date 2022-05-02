@@ -1,6 +1,7 @@
 import requests
 from jsonpath import jsonpath
 import re
+from datetime import datetime
 
 # retrieve data from json path
 def jp(data, path, default=None):
@@ -90,9 +91,9 @@ def cyan(s): return f"\033[96m {s}\033[00m"
 # print test result
 def print_result(idx, passed, info):
     if passed:
-        print(green(f"------ passed, {'%5d' % idx},  {info}"))
+        print(green(f"{datetime.now()} ------ passed, {'%5d' % idx},  {info}"))
     else:
-        print(red(f"!!!!!! failed, {'%5d' % idx},  {info}"))
+        print(red(f"{datetime.now()} !!!!!! failed, {'%5d' % idx},  {info}"))
 
 
 # construct test infomation
