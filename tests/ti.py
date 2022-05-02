@@ -1,22 +1,33 @@
 import requests
 from jsonpath import jsonpath
-
+import re
 
 # retrieve data from json path
-def jp(data, path):
+def jp(data, path, default=None):
     v = jsonpath(data, path)
     if v and type(v) is list:
         return v[0]
-    return None
+    return default
+
+
+# replace like $.aaa.bbb in str by ctx
+def var_replace(src: str, ctx: dict):
+    regex = r'(\$(?:\.\w+)*)'
+    if re.fullmatch(regex, src):
+        return jp(ctx, src)
+
+    keys = re.findall(regex, src)
+    for k in keys:
+        val = jp(ctx,k,'')
+        src = src.replace(k, str(val))
+
+    return src
 
 
 # recursive resolve jsonpath value with context
 def resolve(val, ctx):
     if type(val) is str:
-        if val.startswith('$'):
-            return jp(ctx, val)
-        else:
-            return val
+        return var_replace(val, ctx)
     elif type(val) in [int,float,bool]:
         return val
     elif type(val) is dict:
@@ -48,11 +59,12 @@ def apply_single(ts, ctx):
     try:
         method = resolve(ts['method'], ctx)
         url = resolve(ts['url'], ctx)
+        params = resolve(ts['params'], ctx)
         headers = resolve(ts['headers'], ctx)
         data = resolve(ts['data'], ctx)
         expect = resolve(ts['expect'], ctx)
 
-        response = requests.request(method=method, url=ctx['host']+url,headers=headers,json=data)
+        response = requests.request(method=method,url=ctx['host']+url,params=params,headers=headers,json=data)
         resp['raw'] = response.text
 
         res = response.json()
@@ -78,14 +90,14 @@ def cyan(s): return f"\033[96m {s}\033[00m"
 # print test result
 def print_result(idx, passed, info):
     if passed:
-        print(green(f"------ passed {'%5d' % idx}, {info}"))
+        print(green(f"------ passed, {'%5d' % idx},  {info}"))
     else:
-        print(red(f"!!!!!! failed {'%5d' % idx}, {info}"))
+        print(red(f"!!!!!! failed, {'%5d' % idx},  {info}"))
 
 
 # construct test infomation
-def T(url,method='get',headers={},data={},expect={},ctx={}):
-    return {'url':url,'method':method,'headers':headers,'data':data, 'expect':expect,'ctx':ctx}
+def T(url,method='get',params={},headers={},data={},expect={},ctx={}):
+    return {'url':url,'method':method,'params':params,'headers':headers,'data':data, 'expect':expect,'ctx':ctx}
 
 
 # run all tests

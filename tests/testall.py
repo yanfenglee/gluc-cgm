@@ -12,7 +12,7 @@ tests = [
 
     [
         T(url='/api/v1/entries',method='post',headers={'token':'$.login_token'},data='$.postdata', expect={'code':'0'}),
-        T(url='/api/v1/entries.json?rr=999999999999999&count=1',method='get',headers={'token':'$.login_token'},expect={'code':'0'}),
+        T(url='/api/v1/entries.json',params={'rr':999999999,'count':1},method='get',headers={'token':'$.login_token'},expect={'code':'0'}),
     ]*3
 ]
 
