@@ -45,8 +45,8 @@ def resolve(val, ctx):
         return val
 
 
-# if result as expect
-def match(a, b):
+# if result as expect, expect use jsonpath: {"$.data.code": "0"}
+def match_expect(result, expect):
     if type(a) is dict and type(b) is dict:
         keys = set(a.keys()) & set(b.keys())
         return [a[k]==b[k] for k in keys].count(False) == 0
