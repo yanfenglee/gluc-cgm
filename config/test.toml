@@ -3,5 +3,5 @@ database_uri = "mongodb://localhost:27017"
 database_name = "cgm-test"
 
 # log 
-log_level = "info"  # trace|debug|info|warn|error
+log_level = "debug"  # trace|debug|info|warn|error
 log_path = "./logs"
