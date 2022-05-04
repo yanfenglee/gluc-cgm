@@ -1,4 +1,8 @@
 mode = "prod"
+
+# bind address
+bind_addr = "0.0.0.0:31414"
+
 database_uri = "mongodb://localhost:27017"
 database_name = "cgm-prod"
 
