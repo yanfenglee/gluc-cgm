@@ -1,6 +1,6 @@
-mode = "test"
+mode = "prod"
 database_uri = "mongodb://localhost:27017"
-database_name = "cgm-test"
+database_name = "cgm-prod"
 
 # log 
 log_level = "info"  # trace|debug|info|warn|error

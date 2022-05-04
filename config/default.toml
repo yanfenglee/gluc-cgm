@@ -1,5 +1,9 @@
+# mode
+mode = "default"
+
 # log 
 log_level = "debug"  # trace|debug|info|warn|error
+log_path = "./logs"
 
 # database setting
 database_uri = "mongodb://localhost:27017"
