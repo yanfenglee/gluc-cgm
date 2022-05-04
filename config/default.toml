@@ -2,7 +2,7 @@
 mode = "default"
 
 # log 
-log_level = "debug"  # trace|debug|info|warn|error
+log_level = "info"  # trace|debug|info|warn|error
 log_path = "./logs"
 
 # database setting

@@ -26,7 +26,13 @@ where
 
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
 
-        let header = req.headers().get("token").ok_or_else(|| GlucError::AuthError("no token found".to_owned()))?;
+        let header = if let Some(header) = req.headers().get("api-secret") {
+            Some(header)
+        } else if let Some(header) = req.headers().get("token") {
+            Some(header)
+        } else {
+            None
+        }.ok_or_else(|| GlucError::AuthError("no token found".to_owned()))?;
 
         let token = header.to_str()?.to_string();
 

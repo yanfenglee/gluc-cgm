@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::structs::{Cgm, User};
 use crate::Result;
-use crate::{ret, Ret, DB};
+use crate::{DB};
 
 
 pub fn route() -> Router {
@@ -22,18 +22,18 @@ pub fn route() -> Router {
 }
 
 /// receive bg
-pub async fn receive_bg(user: User, Json(mut data): Json<Vec<Cgm>>) -> Result<Ret<()>> {
-    tracing::info!("receive cgm {:?}, {:?}", user, data);
+pub async fn receive_bg(user: User, Json(mut data): Json<Vec<Cgm>>) -> Result<String> {
+    tracing::debug!("receive cgm {:?}, {:?}", user, data);
 
     for item in data.iter_mut() {
         item.user_id = Some(user._id);
         item.create_time = Some(DateTime::now())
     }
-
-    tracing::info!("store cgm: {:?}", data);
+    let sz = data.len();
 
     DB::coll().insert_many(data, None).await?;
-    ret(())
+
+    Ok(format!("{}",sz))
 }
 
 #[derive(Debug, Deserialize)]
@@ -42,8 +42,8 @@ pub struct Info {
     rr: i64,
 }
 
-pub async fn get_bg(user: User, Query(info): Query<Info>) -> Result<Ret<Vec<Cgm>>> {
-    tracing::info!("query entries {:?}, {:?}", user, info);
+pub async fn get_bg(user: User, Query(info): Query<Info>) -> Result<Json<Vec<Cgm>>> {
+    tracing::debug!("query entries {:?}, {:?}", user, info);
 
     let opt = FindOptions::builder()
         .sort(doc! {"_id": -1})
@@ -59,5 +59,5 @@ pub async fn get_bg(user: User, Query(info): Query<Info>) -> Result<Ret<Vec<Cgm>
         .try_collect()
         .await?;
 
-    ret(res)
+    Ok(Json(res))
 }

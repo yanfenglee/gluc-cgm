@@ -48,7 +48,7 @@ pub async fn register(Json(arg): Json<UserRegisterDTO>) -> Result<Ret<()>, GlucE
 
 pub async fn login(Json(arg): Json<UserLoginDTO>) -> Result<Ret<UserDTO>, GlucError> {
 
-    tracing::info!("login called");
+    tracing::info!("login called {:?}", arg);
 
     if let Some(user) = DB::coll::<User>()
         .find_one(

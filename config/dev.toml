@@ -1,4 +1,6 @@
 mode = "dev"
 
+log_level = "debug"
+
 database_uri = "mongodb://localhost:27017"
 database_name = "cgm-dev"
