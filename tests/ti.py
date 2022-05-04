@@ -3,6 +3,16 @@ from jsonpath import jsonpath
 import re
 from datetime import datetime
 
+
+# color text message
+def white(s): return f"\033[00m {s}\033[00m"
+def red(s): return f"\033[91m {s}\033[00m"
+def green(s): return f"\033[92m {s}\033[00m"
+def yellow(s): return f"\033[93m {s}\033[00m"
+def purple(s): return f"\033[95m {s}\033[00m"
+def cyan(s): return f"\033[96m {s}\033[00m"
+
+
 # retrieve data from json path
 def jp(data, path, default=None):
     v = jsonpath(data, path)
@@ -46,16 +56,19 @@ def resolve(val, ctx):
 
 
 # if result as expect, expect use jsonpath: {"$.data.code": "0"}
-def match_expect(result, expect):
-    if type(a) is dict and type(b) is dict:
-        keys = set(a.keys()) & set(b.keys())
-        return [a[k]==b[k] for k in keys].count(False) == 0
-    else:
-        return a == b
+def match_expect(result:dict, expect:dict):
+    if expect is None:
+        return True
+
+    for k in expect:
+        if expect[k] != jp(result, k):
+            return False
+    
+    return True
     
 
 # test single, add response to context
-def apply_single(ts, ctx):
+def apply_single(ts, ctx, verbose=False):
     resp = {}
     try:
         method = resolve(ts['method'], ctx)
@@ -65,50 +78,46 @@ def apply_single(ts, ctx):
         data = resolve(ts['data'], ctx)
         expect = resolve(ts['expect'], ctx)
 
+        if verbose:
+            print(f"{datetime.now()} begin request: method={method},url={url},params={params},headers={headers},data={data},expect={expect}")
+
         response = requests.request(method=method,url=ctx['host']+url,params=params,headers=headers,json=data)
+
         resp['raw'] = response.text
 
         res = response.json()
 
-        if match(res, expect):
+        if match_expect(res, expect):
             ctx |= res
             ctx |= resolve(ts['ctx'], ctx)
-            return True, f"{url}"
+            return True, url, res if verbose else ""
         else:
-            return False, f"{url} ressult:{res} != {expect}"
+            return False, url, f" {res} {white('~~~===')} {purple(expect)}"
     except Exception as ex:
-        return False, f"{url} exception: {ex.args}, response: {resp['raw']}"
-
-
-# color text message
-def red(s): return f"\033[91m {s}\033[00m"
-def green(s): return f"\033[92m {s}\033[00m"
-def yello(s): return f"\033[93m {s}\033[00m"
-def purple(s): return f"\033[95m {s}\033[00m"
-def cyan(s): return f"\033[96m {s}\033[00m"
+        return False, url, f" exception: {ex}, response: {resp['raw']}"
 
 
 # print test result
-def print_result(idx, passed, info):
+def print_result(t, idx, passed, url, info):
     if passed:
-        print(green(f"{datetime.now()} ------ passed, {'%5d' % idx},  {info}"))
+        print(f"{datetime.now()} {green('------ passed')}, {t['name']}, {'%5d' % idx},  {url}, {cyan(info)}")
     else:
-        print(red(f"{datetime.now()} !!!!!! failed, {'%5d' % idx},  {info}"))
+        print(f"{datetime.now()} {red('!!!!!! failed')}, {t['name']}, {'%5d' % idx},  {url}, {yellow(info)}")
 
 
 # construct test infomation
-def T(url,method='get',params={},headers={},data={},expect={},ctx={}):
-    return {'url':url,'method':method,'params':params,'headers':headers,'data':data, 'expect':expect,'ctx':ctx}
+def T(url,name='',method='get',params={},headers={},data={},expect=None,ctx={}):
+    return {'url':url,'name':name,'method':method,'params':params,'headers':headers,'data':data, 'expect':expect,'ctx':ctx}
 
 
 # run all tests
-def run(tests, ctx):
+def run(tests, ctx, verbose=False):
     idx = 0
     for ts in tests:
         if type(ts) is list:
             for t in ts:
-                print_result(idx, *apply_single(t, ctx))
+                print_result(t, idx, *apply_single(t, ctx, verbose))
                 idx += 1
         else:
-            print_result(idx, *apply_single(ts, ctx))
+            print_result(ts, idx, *apply_single(ts, ctx, verbose))
             idx += 1

@@ -41,10 +41,19 @@ impl Settings {
 
     fn setup_log(level: &String) {
         let level = Level::from_str(level).unwrap();
+
+        // tracing_subscriber::registry()
+        // .with(tracing_subscriber::filter::filter_fn(|metadata| {
+        //     metadata.target() == "gluc_cgm"
+        // }))
+        // .with(tracing_subscriber::fmt::layer())
+        // //.with_timer(time::SystemTime)
+        // .init();
+
         tracing_subscriber::fmt()
             .with_max_level(level)
             //.with_timer(time::ChronoLocal::with_format(String::from("%Y-%m-%d %H:%M:%S%.6f")))
-            .with_timer(time::ChronoLocal::rfc3339())
+            .with_timer(time::SystemTime)
             .init();
     }
 

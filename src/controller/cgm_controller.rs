@@ -1,36 +1,32 @@
-use actix_web::{get, post, web};
+
+use axum::{Json, Router};
+use axum::extract::Query;
+use axum::routing::{post, get};
 use futures::TryStreamExt;
 use mongodb::bson::{doc, DateTime};
 use mongodb::options::FindOptions;
-//use chrono::NaiveDateTime;
-//use rbatis::core::value::DateTimeNow;
+
 use serde::Deserialize;
 
-use crate::middleware::auth;
-use crate::middleware::auth_user::AuthUser;
-use crate::structs::Cgm;
+use crate::structs::{Cgm, User};
 use crate::Result;
 use crate::{ret, Ret, DB};
 
-/// config route service
-pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::scope("/api/v1")
-            .wrap(auth::UserAuth)
-            .service(receive_bg)
-            .service(get_bg),
-    );
+
+pub fn route() -> Router {
+    let app = Router::new()
+        .route("/entries", post(receive_bg))
+        .route("/entries.json", get(get_bg));
+
+    app
 }
 
 /// receive bg
-#[post("/entries")]
-pub async fn receive_bg(user: AuthUser, arg: web::Json<Vec<Cgm>>) -> Result<Ret<()>> {
-    tracing::info!("receive cgm {:?}, {:?}", user, arg);
-
-    let mut data = arg.into_inner();
+pub async fn receive_bg(user: User, Json(mut data): Json<Vec<Cgm>>) -> Result<Ret<()>> {
+    tracing::info!("receive cgm {:?}, {:?}", user, data);
 
     for item in data.iter_mut() {
-        item.user_id = Some(user.user._id);
+        item.user_id = Some(user._id);
         item.create_time = Some(DateTime::now())
     }
 
@@ -46,8 +42,7 @@ pub struct Info {
     rr: i64,
 }
 
-#[get("/entries.json")]
-pub async fn get_bg(user: AuthUser, info: web::Query<Info>) -> Result<Ret<Vec<Cgm>>> {
+pub async fn get_bg(user: User, Query(info): Query<Info>) -> Result<Ret<Vec<Cgm>>> {
     tracing::info!("query entries {:?}, {:?}", user, info);
 
     let opt = FindOptions::builder()
@@ -57,7 +52,7 @@ pub async fn get_bg(user: AuthUser, info: web::Query<Info>) -> Result<Ret<Vec<Cg
 
     let res: Vec<Cgm> = DB::coll()
         .find(
-            doc! {"user_id": user.user._id, "date": {"$lte": info.rr}},
+            doc! {"user_id": user._id, "date": {"$lte": info.rr}},
             Some(opt),
         )
         .await?

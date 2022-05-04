@@ -1,6 +1,8 @@
 use std::fmt::{Debug};
 
-use actix_web::{HttpResponse, body::BoxBody};
+
+use axum::response::IntoResponse;
+use http::header::ToStrError;
 
 use crate::Ret;
 
@@ -17,7 +19,10 @@ pub enum GlucError {
     DBError(#[from] mongodb::error::Error),
 
     #[error("{0}")]
-    ActixError(String),
+    AxumError(#[from] axum::Error),
+
+    #[error("{0}")]
+    ToStrErr(#[from] ToStrError),
 
     #[error("{0}")]
     UnknownError(String)
@@ -29,20 +34,16 @@ impl GlucError {
             Self::AuthError(..) => "1001",
             Self::RegisterError(..) => "1002",
             Self::DBError(..) => "1003",
-            Self::ActixError(..) => "1004",
-            Self::UnknownError(..) => "1005",
+            Self::AxumError(..) => "1004",
+            Self::ToStrErr(..) => "1005",
+            Self::UnknownError(..) => "1006",
         }
     }
 }
 
-impl actix_web::ResponseError for GlucError {
-    fn error_response(&self) -> HttpResponse<BoxBody> {
-        let ret: Ret<()> = self.into();
-        HttpResponse::Ok().status(self.status_code()).json(ret)
-    }
-
-    fn status_code(&self) -> actix_web::http::StatusCode {
-        actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
+impl IntoResponse for GlucError {
+    fn into_response(self) -> axum::response::Response {
+        Ret::from(&self).into_response()
     }
 }
 

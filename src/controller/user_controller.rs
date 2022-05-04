@@ -1,28 +1,26 @@
-use actix_web::{get, post, web};
+use axum::{Json, Router, routing::{post, get}};
 use mongodb::bson::{doc, oid::ObjectId, DateTime};
 
 use crate::{
     error::GlucError,
-    middleware::{auth_user::AuthUser},
     ret,
     structs::{User, UserDTO, UserLoginDTO, UserRegisterDTO},
     util::hash,
     Ret, DB,
 };
 
-/// config route service
-pub fn config(cfg: &mut web::ServiceConfig) {
 
-    cfg.service(
-        web::scope("/user")
-            .service(register)
-            .service(login)
-            .service(check),
-    );
+pub fn route() -> Router {
+    let app = Router::new()
+        .route("/register", post(register))
+        .route("/login", post(login))
+        .route("/check", get(check));
+
+    app
 }
 
-#[post("/register")]
-pub async fn register(arg: web::Json<UserRegisterDTO>) -> Result<Ret<()>, GlucError> {
+
+pub async fn register(Json(arg): Json<UserRegisterDTO>) -> Result<Ret<()>, GlucError> {
 
     tracing::info!("begin login: {:?}", arg);
 
@@ -48,8 +46,7 @@ pub async fn register(arg: web::Json<UserRegisterDTO>) -> Result<Ret<()>, GlucEr
     ret(())
 }
 
-#[post("/login")]
-pub async fn login(arg: web::Json<UserLoginDTO>) -> Result<Ret<UserDTO>, GlucError> {
+pub async fn login(Json(arg): Json<UserLoginDTO>) -> Result<Ret<UserDTO>, GlucError> {
 
     tracing::info!("login called");
 
@@ -70,8 +67,8 @@ pub async fn login(arg: web::Json<UserLoginDTO>) -> Result<Ret<UserDTO>, GlucErr
     };
 }
 
-#[get("/check")]
-pub async fn check(user: Option<AuthUser>) -> Result<Ret<String>, GlucError> {
+
+pub async fn check(user: Option<User>) -> Result<Ret<String>, GlucError> {
     if user.is_some() {
         return ret("user.user".into());
     } else {

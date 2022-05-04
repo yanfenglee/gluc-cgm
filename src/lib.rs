@@ -1,7 +1,7 @@
 
 use std::fmt::{Debug};
 
-use actix_web::{HttpResponse, Responder, body::{BoxBody}};
+use axum::{response::IntoResponse, Json};
 use error::GlucError;
 use serde::{Serialize, Deserialize};
 
@@ -40,18 +40,10 @@ pub fn ret<T>(data: T) -> Result<Ret<T>> where T: Serialize {
     Ok(Ret::new(data))
 }
 
-// impl<T> Into<HttpResponse> for Ret<T>  where T: Serialize {
-//     fn into(self) -> HttpResponse {
-//         HttpResponse::Ok().json(self)
-//     }
-// }
 
-impl<T> Responder for Ret<T>  where T: Serialize {
-    type Body = BoxBody;
-
-    fn respond_to(self, _: &actix_web::HttpRequest) -> HttpResponse<Self::Body> {
-        //web::Json::<T>(self).respond_to(req)
-        HttpResponse::Ok().json(self)
+impl<T> IntoResponse for Ret<T>  where T: Serialize {
+    fn into_response(self) -> axum::response::Response {
+        Json(self).into_response()
     }
 }
 

@@ -1,25 +1,15 @@
-use actix_web::{web, App, HttpServer};
 use anyhow::Result;
-
+use axum::handler::Handler;
+use axum::response::IntoResponse;
+use axum::Router;
+use http::Uri;
 use crate::error::GlucError;
-use crate::{controller, settings::Settings, DB};
-use actix_web::http::{StatusCode};
-use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
-use actix_web::{dev};
+use crate::{controller::cgm_controller, controller::user_controller, settings::Settings, DB};
 
-fn add_error_header<B>(res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>, actix_web::Error> {
-    // res.response_mut().headers_mut().insert(
-    //     header::CONTENT_TYPE,
-    //     header::HeaderValue::from_static("Error"),
-    // );
-
-    tracing::warn!("error: 111111111");
-
-    //Ok(ErrorHandlerResponse::Response(res.map_into_left_body()))
-
-    Err(actix_web::Error::from(GlucError::ActixError("asdf".into())))
+async fn fallback(uri: Uri) -> impl IntoResponse {
+    tracing::warn!("no route found {}", uri);
+    GlucError::UnknownError(format!("No route for {}", uri))
 }
-
 
 pub async fn run() -> Result<(), anyhow::Error> {
     // read config
@@ -30,16 +20,17 @@ pub async fn run() -> Result<(), anyhow::Error> {
 
     tracing::info!("start app...");
 
-    HttpServer::new(|| {
-        App::new()
-            .wrap(ErrorHandlers::new().handler(StatusCode::BAD_REQUEST, add_error_header))
-            .app_data(web::JsonConfig::default().limit(1024 * 1024 * 8))
-            .configure(controller::user_controller::config)
-            .configure(controller::cgm_controller::config)
-    })
-    .bind(&Settings::get().bind_addr)?
-    .run()
-    .await?;
+    let app = Router::new()
+        .nest("/user", user_controller::route())
+        .nest("/api/v1", cgm_controller::route())
+        .fallback(fallback.into_service());
+
+    let addr = Settings::get().bind_addr.parse().unwrap();
+
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 
     tracing::info!("application exit!!!");
 

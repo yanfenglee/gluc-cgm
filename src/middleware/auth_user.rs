@@ -1,84 +1,39 @@
-use actix_web::{
-    http::{header::HeaderMap},
-    web::Query,
-    FromRequest, HttpRequest,
-};
-use mongodb::bson::doc;
 
-use std::{collections::HashMap, future::Future, pin::Pin};
+use axum::{async_trait, extract::{FromRequest, RequestParts}};
+use mongodb::bson::{doc};
 
 use crate::{structs::User, DB, error::GlucError};
 
-#[derive(Debug)]
-pub struct AuthUser {
-    pub(crate) user: User,
+
+pub async fn get_user_from_token(token: &String) -> Option<User> {
+    let user = DB::coll::<User>()
+        .find_one(doc! {"token":token}, None)
+        .await
+        .ok()??;
+
+    tracing::debug!("token to user: {:?}", user);
+
+    Some(user)
 }
 
-impl AuthUser {
-    pub async fn from_header(headers: HeaderMap) -> Option<Self> {
-        if let Some(header) = headers.get("token") {
-            let token = header.to_str().unwrap().to_string();
 
-            return Self::from_token(&token).await;
-        }
+#[async_trait]
+impl<B> FromRequest<B> for User
+where
+    B: Send,
+{
+    type Rejection = GlucError;
 
-        None
-    }
+    async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
 
-    pub async fn from_header_qs(headers: HeaderMap, qs: String) -> Option<Self> {
-        Self::from_header(headers).await.or(Self::from_qstring(qs).await)
-    }
+        let header = req.headers().get("token").ok_or_else(|| GlucError::AuthError("no token found".to_owned()))?;
 
-    pub async fn from_request(req: &HttpRequest) -> Option<Self> {
-        if let Ok(qs) = Query::<HashMap<String, String>>::from_query(req.query_string()) {
-            if let Some(token) = qs.get("token") {
-                return Self::from_token(&token.to_string()).await;
-            } else {
-                return Self::from_header(req.headers().clone()).await;
-            }
-        } else {
-            return None;
-        }
-    }
+        let token = header.to_str()?.to_string();
 
-    pub async fn from_qstring(qstring: String) -> Option<Self> {
-        if let Ok(qs) = Query::<HashMap<String, String>>::from_query(&qstring) {
-            if let Some(token) = qs.get("token") {
-                return Self::from_token(&token.to_string()).await;
-            }
-        }
+        let user = get_user_from_token(&token).await.ok_or_else(|| GlucError::AuthError("auth failed".to_owned()))?;
 
-        return None;
-    }
-
-    pub async fn from_token(token: &String) -> Option<Self> {
-        let user = DB::coll::<User>()
-            .find_one(doc! {"token":token}, None)
-            .await
-            .ok()??;
-
-        tracing::debug!("token to user: {:?}", user);
-
-        Some(AuthUser { user })
+        Ok(user)
+        
     }
 }
 
-impl FromRequest for AuthUser {
-    type Error = GlucError;
-    type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
-
-    fn from_request(req: &HttpRequest, _payload: &mut actix_web::dev::Payload) -> Self::Future {
-        let req = req.clone();
-
-        let ret = async move {
-            if let Some(user) = AuthUser::from_request(&req).await {
-                Ok(user)
-            } else {
-                //Err(Error::from(ParseError::Header))
-                Err(GlucError::AuthError("require login".into()))
-            }
-        };
-
-        Box::pin(ret)
-    }
-}
