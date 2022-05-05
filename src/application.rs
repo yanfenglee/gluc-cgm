@@ -1,10 +1,13 @@
 use anyhow::Result;
 use axum::handler::Handler;
+use axum::middleware::{self};
 use axum::response::IntoResponse;
 use axum::Router;
-use http::Uri;
+use http::{Uri};
 use crate::error::GlucError;
 use crate::{controller::cgm_controller, controller::user_controller, settings::Settings, DB};
+use crate::util;
+
 
 async fn fallback(uri: Uri) -> impl IntoResponse {
     tracing::warn!("no route found {}", uri);
@@ -24,6 +27,10 @@ pub async fn run() -> Result<(), anyhow::Error> {
         .nest("/user", user_controller::route())
         .nest("/api/v1", cgm_controller::route())
         .fallback(fallback.into_service());
+        
+    let app = if Settings::get().log_level == "debug" {
+        app.layer(middleware::from_fn(util::print_request_response)) 
+    } else {app};
 
     let addr = Settings::get().bind_addr.parse().unwrap();
 

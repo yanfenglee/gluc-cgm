@@ -19,7 +19,7 @@ tests = [
 
         T(url='/api/v1/entries',method='post',headers={'api-secret':'$.login_token'},data='$.postdata', expect={'code':'0'}),
         T(url='/api/v1/entries.json',params={'rr':9999999999999999,'count':1},method='get',headers={'api-secret':'$.login_token'},expect={'code':'0'}),
-    ]*100
+    ]
 
 ]
 
