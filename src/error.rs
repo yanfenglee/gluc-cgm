@@ -1,4 +1,4 @@
-use std::fmt::{Debug};
+use std::{fmt::{Debug}, str::Utf8Error};
 
 
 use axum::response::IntoResponse;
@@ -25,6 +25,15 @@ pub enum GlucError {
     ToStrErr(#[from] ToStrError),
 
     #[error("{0}")]
+    HyperError(#[from] hyper::Error),
+
+    #[error("{0}")]
+    Utf8Error(#[from] Utf8Error),
+
+    #[error("{0}")]
+    JsonError(#[from] serde_json::Error),
+
+    #[error("{0}")]
     UnknownError(String)
 }
 
@@ -36,7 +45,10 @@ impl GlucError {
             Self::DBError(..) => "1003",
             Self::AxumError(..) => "1004",
             Self::ToStrErr(..) => "1005",
-            Self::UnknownError(..) => "1006",
+            Self::HyperError(..) => "1006",
+            Self::Utf8Error(..) => "1007",
+            Self::JsonError(..) => "1008",
+            Self::UnknownError(..) => "1009",
         }
     }
 }

@@ -1,18 +1,23 @@
 
+use axum::body::HttpBody;
+use axum::extract::RawBody;
 use axum::response::IntoResponse;
-use axum::{Json, Router};
+use axum::{Json, Router, BoxError};
 //use axum::extract::Query;
 use axum::routing::{post, get};
 //use futures::TryStreamExt;
 //use mongodb::bson::{doc, DateTime};
 //use mongodb::options::FindOptions;
 
+use http::{Request, StatusCode};
+use hyper::Body;
+use mongodb::bson::{bson, Document, Bson};
 //use serde::Deserialize;
 use serde_json::{Map, Value};
 
 use crate::structs::{User};
-use crate::Result;
 //use crate::{DB};
+use crate::{Result, DB};
 
 
 pub fn route() -> Router {
@@ -26,14 +31,28 @@ pub fn route() -> Router {
     app
 }
 
-pub async fn treatments_post(_user: User, Json(data): Json<Map<String,Value>>) -> Result<impl IntoResponse> {
-    tracing::debug!("not implemented!!! treatments_post: {:?}", data);
+
+async fn body2doc(body: Body) -> Result<Document> {
+    let bytes = hyper::body::to_bytes(body).await?;
+    let s = std::str::from_utf8(&bytes)?;
+    let doc: Document = serde_json::from_str(s)?;
+    Ok(doc)
+}
+
+pub async fn treatments_post(_user: User, RawBody(body): RawBody) -> Result<impl IntoResponse> {
+
+    let doc = body2doc(body).await?;
+    
+    DB::get().collection("Treatments").insert_one(doc, None).await?;
 
     Ok("1")
 }
 
-pub async fn devicestatus(_user: User, Json(data): Json<Map<String,Value>>) -> Result<impl IntoResponse> {
-    tracing::debug!("not implemented!!! devicestatus: {:?}", data);
+
+pub async fn devicestatus(_user: User, RawBody(body): RawBody) -> Result<impl IntoResponse> {
+    let doc = body2doc(body).await?;
+    
+    DB::get().collection("Devices").insert_one(doc, None).await?;
 
     Ok("1")
 }
