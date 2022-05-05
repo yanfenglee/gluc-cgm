@@ -46,7 +46,7 @@ pub async fn get_bg(user: User, Query(info): Query<Info>) -> Result<Json<Vec<Cgm
     tracing::debug!("query entries {:?}, {:?}", user, info);
 
     let opt = FindOptions::builder()
-        .sort(doc! {"_id": -1})
+        .sort(doc! {"date": -1})
         .limit(info.count)
         .build();
 
