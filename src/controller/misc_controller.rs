@@ -9,9 +9,12 @@ use axum::routing::{post, get};
 //use mongodb::bson::{doc, DateTime};
 //use mongodb::options::FindOptions;
 
+use chrono::Local;
+use futures::TryStreamExt;
 use http::{Request, StatusCode};
 use hyper::Body;
-use mongodb::bson::{bson, Document, Bson};
+use mongodb::bson::{bson, Document, Bson, doc, DateTime};
+use mongodb::options::FindOptions;
 //use serde::Deserialize;
 use serde_json::{Map, Value};
 
@@ -22,7 +25,7 @@ use crate::{Result, DB};
 
 pub fn route() -> Router {
     let app = Router::new()
-        .route("/treatments", post(treatments_post).get(treatments_get))
+        .route("/treatments", post(treatments_post).put(treatments_post).get(treatments_get))
         .route("/devicestatus", post(devicestatus))
         .route("/activity", post(activity).get(activity))
         .route("/status.json", get(get_status))
@@ -39,19 +42,25 @@ async fn body2doc(body: Body) -> Result<Document> {
     Ok(doc)
 }
 
-pub async fn treatments_post(_user: User, RawBody(body): RawBody) -> Result<impl IntoResponse> {
+pub async fn treatments_post(user: User, RawBody(body): RawBody) -> Result<impl IntoResponse> {
 
-    let doc = body2doc(body).await?;
+    let mut d = body2doc(body).await?;
+
+    d.insert("user_id", user._id);
+    d.insert("create_time", DateTime::now());
     
-    DB::get().collection("Treatments").insert_one(doc, None).await?;
+    DB::get().collection("Treatments").insert_one(d, None).await?;
 
     Ok("1")
 }
 
 
-pub async fn devicestatus(_user: User, RawBody(body): RawBody) -> Result<impl IntoResponse> {
-    let doc = body2doc(body).await?;
+pub async fn devicestatus(user: User, RawBody(body): RawBody) -> Result<impl IntoResponse> {
+    let mut doc = body2doc(body).await?;
     
+    doc.insert("user_id", user._id);
+    doc.insert("create_time", DateTime::now());
+
     DB::get().collection("Devices").insert_one(doc, None).await?;
 
     Ok("1")
@@ -63,10 +72,25 @@ pub async fn activity(_user: User, Json( _data): Json<Map<String,Value>>) -> Res
     Ok("1")
 }
 
-pub async fn treatments_get(_user: User) -> Result<impl IntoResponse> {
-    tracing::debug!("not implemented!!! treatments_get");
+pub async fn treatments_get(user: User) -> Result<impl IntoResponse> {
+    tracing::debug!("get treatments_get call");
 
-    Ok(format!("Not Implemented treatments_get"))
+    let opt = FindOptions::builder()
+    .sort(doc! {"timestamp": -1})
+    .limit(10)
+    .build();
+
+    let now = chrono::Utc::now().timestamp_millis() - 2*24*60*60*1000;
+    let res: Vec<Bson> = DB::get().collection("Treatments")
+        .find(
+            doc! {"user_id": user._id, "timestamp": {"$lte": now}},
+            Some(opt),
+        )
+        .await?
+        .try_collect()
+        .await?;
+
+    Ok(serde_json::to_string(&res)?)
 }
 
 pub async fn get_status(_user: User) -> Result<impl IntoResponse> {
