@@ -1,25 +1,14 @@
 
-use axum::body::HttpBody;
 use axum::extract::RawBody;
 use axum::response::IntoResponse;
-use axum::{Json, Router, BoxError};
-//use axum::extract::Query;
 use axum::routing::{post, get};
-//use futures::TryStreamExt;
-//use mongodb::bson::{doc, DateTime};
-//use mongodb::options::FindOptions;
-
-use chrono::Local;
+use axum::{Json, Router};
 use futures::TryStreamExt;
-use http::{Request, StatusCode};
 use hyper::Body;
-use mongodb::bson::{bson, Document, Bson, doc, DateTime};
+use mongodb::bson::{Document, Bson, doc, DateTime};
 use mongodb::options::FindOptions;
-//use serde::Deserialize;
 use serde_json::{Map, Value};
-
 use crate::structs::{User};
-//use crate::{DB};
 use crate::{Result, DB};
 
 
@@ -73,17 +62,17 @@ pub async fn activity(_user: User, Json( _data): Json<Map<String,Value>>) -> Res
 }
 
 pub async fn treatments_get(user: User) -> Result<impl IntoResponse> {
-    tracing::debug!("get treatments_get call");
+    tracing::debug!("get treatments_get call: {:?}", user._id);
 
     let opt = FindOptions::builder()
     .sort(doc! {"timestamp": -1})
     .limit(10)
     .build();
 
-    let now = chrono::Utc::now().timestamp_millis() - 2*24*60*60*1000;
+    let twobefore = chrono::Utc::now().timestamp_millis() - 2*24*60*60*1000;
     let res: Vec<Bson> = DB::get().collection("Treatments")
         .find(
-            doc! {"user_id": user._id, "timestamp": {"$lte": now}},
+            doc! {"user_id": user._id, "timestamp": {"$gte": twobefore}},
             Some(opt),
         )
         .await?
