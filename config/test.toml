@@ -2,6 +2,9 @@ mode = "test"
 database_uri = "mongodb://localhost:27017"
 database_name = "cgm-test"
 
+# bind address
+bind_addr = "0.0.0.0:26800"
+
 # log 
 log_level = "debug"  # trace|debug|info|warn|error
 log_path = "./logs"
