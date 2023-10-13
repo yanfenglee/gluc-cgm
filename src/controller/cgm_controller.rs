@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::structs::{Cgm, User};
 use crate::Result;
-use crate::{DB};
+use crate::DB;
 
 
 pub fn route() -> Router {
@@ -40,7 +40,7 @@ pub async fn receive_bg(user: User, Json(mut data): Json<Vec<Cgm>>) -> Result<St
 #[derive(Debug, Deserialize)]
 pub struct Info {
     count: i64,
-    rr: i64,
+    rr: Option<i64>,
 }
 
 pub async fn get_bg(user: User, Query(info): Query<Info>) -> Result<Json<Vec<Cgm>>> {
@@ -51,9 +51,10 @@ pub async fn get_bg(user: User, Query(info): Query<Info>) -> Result<Json<Vec<Cgm
         .limit(info.count)
         .build();
 
+    let rr = info.rr.unwrap_or(9999999999999999);
     let res: Vec<Cgm> = DB::coll()
         .find(
-            doc! {"user_id": user._id, "date": {"$lte": info.rr}},
+            doc! {"user_id": user._id, "date": {"$lte": rr}},
             Some(opt),
         )
         .await?
