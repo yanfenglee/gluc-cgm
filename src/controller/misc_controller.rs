@@ -8,7 +8,7 @@ use hyper::Body;
 use mongodb::bson::{Document, Bson, doc, DateTime};
 use mongodb::options::FindOptions;
 use serde_json::{Map, Value};
-use crate::structs::{User};
+use crate::structs::User;
 use crate::{Result, DB};
 
 

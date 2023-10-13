@@ -16,7 +16,8 @@ use crate::{DB};
 pub fn route() -> Router {
     let app = Router::new()
         .route("/entries", post(receive_bg))
-        .route("/entries.json", get(get_bg));
+        .route("/entries.json", get(get_bg))
+        .route("/entries/sgv.json", get(get_bg));
 
     app
 }
